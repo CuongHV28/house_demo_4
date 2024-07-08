@@ -31,16 +31,14 @@ export interface IHouseFloor {
 }
 
 export interface IHouseRoof {
-  width: number; // The width of the roof
-  depth: number; // The depth of the roof, for non-circular roofs
-  height: number; // The height of the roof from its base to its peak
   material: any; // The material of the roof
   position?: {
     x: number;
     y: number;
     z: number;
   }; // Optional position, if you want to override automatic placement
-  sides: IHouseSide[];
+  baseHeight?: number; // Optional base height, representing the height at which the roof starts
+  sides?: THREE.Mesh[]; // Optional meshes, if you want to add custom geometry to the roof
 }
 
 export interface IHouse {

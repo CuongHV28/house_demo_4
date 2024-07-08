@@ -267,109 +267,29 @@ function addFloor(floor: IHouseFloor) {
     return floorGroup;
 }
 
-// add roof
-function addRoof(roof: IHouseRoof) {
-    const roofGroup = new OperationGroup();
-
-    // Assuming the roof is a flat shape for simplicity
-    const roofGeometry = new THREE.BoxGeometry(roof.width, roof.height, roof.depth);
-    roofGeometry.translate(0, roof.height / 2, 0); // Center the geometry on the y-axis
-
-    const roofMaterial = new THREE.MeshStandardMaterial({ color: roof.material });
-    const roofMesh = new Operation(roofGeometry, roofMaterial);
-    roofMesh.operation = ADDITION;
-    roofMesh.receiveShadow = true;
-
-    // Set the position based on the roof object
-    roofGroup.position.set(roof.position.x, roof.position.y, roof.position.z);
-
-    roofGroup.add(roofMesh);
-    scene.add(roofGroup);
-
-    return roofGroup;
-}
-
-function createRoofSide(side: IHouseSide): THREE.Mesh {
-  // Default values
-  const width = side.width || 5;
-  const depth = new THREE.Vector3().subVectors(side.start!, side.end!).length();
-  const height = side.angle ? (depth / 2) * Math.tan(side.angle) : 2; // Example calculation
-
-  // Create geometry and mesh
-  const geometry = new THREE.PlaneGeometry(width, height);
-  const material = new THREE.MeshBasicMaterial({ color: 0x8B4513, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(geometry, material);
-
-  // Position and rotate mesh based on `side` properties
-  // This is a simplified example. You'll need to adjust calculations based on your needs
-  if (side.shift) {
-      mesh.position.add(side.shift);
-  }
-  if (side.angle) {
-      mesh.rotation.x = -side.angle; // Assuming angle is the slope angle from the horizontal
-  }
-
-  // Additional transformations based on `start`, `end`, and `combinedAngle` might be needed
-
-  return mesh;
-}
-
-const baseSize = 10; // Length of the square base
-const roofHeight = 5; // Height from the base to the peak
-
-// Calculate the center of the base (which is at the origin for this example)
-const baseCenter = new THREE.Vector3(0, 0, 0);
-
-// Calculate the peak of the roof
-const roofPeak = new THREE.Vector3(0, roofHeight, 0);
-
-// Define the corners of the base
-const baseCorners = [
-  new THREE.Vector3(-baseSize / 2, 0, baseSize / 2), // Front left
-  new THREE.Vector3(baseSize / 2, 0, baseSize / 2),  // Front right
-  new THREE.Vector3(baseSize / 2, 0, -baseSize / 2), // Back right
-  new THREE.Vector3(-baseSize / 2, 0, -baseSize / 2) // Back left
-];
-
-// Define the sides of the roof
-const roofSides: IHouseSide[] = baseCorners.map((corner, index) => ({
-  start: corner,
-  end: baseCorners[(index + 1) % baseCorners.length], // Connects each corner to the next
-  shift: roofPeak, // All sides shift up to the peak
-  width: baseSize,
-  angle: Math.atan2(roofHeight, baseSize / Math.sqrt(2)), // Angle from base to peak
-}));
-
-function createRoofSideMesh(side: IHouseSide): THREE.Mesh {
-  const geometry = new THREE.BoxGeometry();
-  geometry.vertices.push(side.start!, side.end!, side.shift!); // Add vertices
-  geometry.faces.push(new THREE.Face3(0, 1, 2)); // Create a triangular face
-
-  const material = new THREE.MeshBasicMaterial({ color: 0x8B4513, side: THREE.DoubleSide });
-  const mesh = new THREE.Mesh(geometry, material);
-
-  return mesh;
-}
-
-// Example: Creating and adding the first roof side to the scene
-const firstRoofSideMesh = createRoofSideMesh(roofSides[0]);
-scene.add(firstRoofSideMesh);
-
-
 for (const floor of house.floors) {
     houseGroup.add(addFloor(floor));
 }
 
+// roof
+function addRoof(roof: IHouseRoof): THREE.Group {
+  const roofGroup = new THREE.Group();
+  if (roof.sides) {
+      for (const mesh of roof.sides) {
+          roofGroup.add(mesh);
+      }
+  }
+  return roofGroup;
+}
+
+if (house.roof && house.roof.sides) {
+  const roofGroup = addRoof(house.roof);
+  houseGroup.add(roofGroup);
+}
 
 
-// const slope = new THREE.PlaneGeometry(5, 5);
-// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, side: THREE.DoubleSide });
-// const plane = new THREE.Mesh(slope, material);
-// plane.rotation.x = -Math.PI / 4;
-// plane.position.y = 1;
-// scene.add(plane);
 
-// renderOutput(houseGroup);
+renderOutput(houseGroup);
 
 // show result
 function animate() {
