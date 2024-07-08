@@ -110,31 +110,38 @@ let minZ = highestFloor.sides[0]?.start?.z || 0;
 let maxZ = highestFloor.sides[0]?.start?.z || 0;
 
 // Calculate bounding box of the highest floor
-highestFloor.sides.forEach(side => {
-    minX = Math.min(minX, side.start?.x ?? 0);
-    maxX = Math.max(maxX, side.start?.x ?? 0);
-    minZ = Math.min(minZ, side.start?.z || 0);
-    maxZ = Math.max(maxZ, side.start?.z || 0);
-}); 
+const roofWidth = highestFloor.sides[0].width;
+const roofHeight = highestFloor.sides[0].width * 0.5;
+const roofDepth = highestFloor.sides[0].width * 0.5;
+const roofPosition = highestFloor.sides[0].position;
 
-// Calculate width, depth, and position for the roof
-const roofWidth = maxX - minX;
-const roofDepth = maxZ - minZ;
-const roofHeight = 0.2; // Example height of the roof
-const totalFloorsHeight = nhaCap4.floors.reduce((acc, floor) => acc + floor.height, 0);
+// Calculate corner points of the roof base
+const corners = [
+    { x: roofPosition.x - roofWidth / 2, z: roofPosition.z - roofDepth / 2 }, // Front left
+    { x: roofPosition.x + roofWidth / 2, z: roofPosition.z - roofDepth / 2 }, // Front right
+    { x: roofPosition.x + roofWidth / 2, z: roofPosition.z + roofDepth / 2 }, // Back right
+    { x: roofPosition.x - roofWidth / 2, z: roofPosition.z + roofDepth / 2 }, // Back left
+];
 
-// Create the roof object
-nhaCap4.roof = {
-    width: roofWidth,
-    depth: roofDepth,
-    height: roofHeight,
-    material: roofMaterial, // Assuming roofMaterial is defined
-    position: {
-        x: (minX + maxX) / 2, // Center of the roof on the x-axis
-        y: totalFloorsHeight, // Position the roof on top of the highest floor
-        z: (minZ + maxZ) / 2, // Center of the roof on the z-axis
-    }
+// Roof peak position
+const peak = {
+    x: roofPosition.x,
+    y: roofPosition.y + roofHeight,
+    z: roofPosition.z,
 };
+
+// Define the sides of the roof
+nhaCap4.roof.sides = corners.map((corner, index) => {
+    const nextCorner = corners[(index + 1) % corners.length];
+    return {
+        start: new THREE.Vector3(corner.x, roofPosition.y, corner.z),
+        end: new THREE.Vector3(nextCorner.x, roofPosition.y, nextCorner.z),
+        shift: new THREE.Vector3(peak.x, peak.y, peak.z),
+        width: roofWidth, // This might need adjustment based on the actual side
+        angle: Math.atan(roofHeight / (roofWidth / 2)), // This is a simplification
+    };
+});
+
 // nhaCap4.roof = {
 //     width: nhaCap4.floors[0].sides[1].start.x - nhaCap4.floors[0].sides[0].start.x,
 //     depth: nhaCap4.floors[0].sides[2].start.z - nhaCap4.floors[0].sides[1].start.z,

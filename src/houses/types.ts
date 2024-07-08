@@ -34,14 +34,13 @@ export interface IHouseRoof {
   width: number; // The width of the roof
   depth: number; // The depth of the roof, for non-circular roofs
   height: number; // The height of the roof from its base to its peak
-  slope?: number; // The slope of the roof, useful for pitched roofs
   material: any; // The material of the roof
   position?: {
     x: number;
     y: number;
     z: number;
   }; // Optional position, if you want to override automatic placement
-
+  sides: IHouseSide[];
 }
 
 export interface IHouse {
