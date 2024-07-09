@@ -37,8 +37,8 @@ export interface IHouseRoof {
     y: number;
     z: number;
   }; // Optional position, if you want to override automatic placement
-  baseHeight?: number; // Optional base height, representing the height at which the roof starts
-  sides?: THREE.Mesh[]; // Optional meshes, if you want to add custom geometry to the roof
+  height?: number; // Optional base height, representing the height at which the roof starts
+  sides?: IHouseSide[]; 
 }
 
 export interface IHouse {

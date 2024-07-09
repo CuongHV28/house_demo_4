@@ -32,6 +32,8 @@ import init from "./house";
 import { IHouseRoof, IHouseFloor, IHouseSide } from "./houses/types";
 
 import Stats from "stats.js";
+import { debug } from "console";
+import test from "node:test";
 
 const stats = new Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
@@ -184,7 +186,7 @@ function renderOutput(outputGroup: any) {
     result.receiveShadow = true;
   
     result.matrixAutoUpdate = false;
-    result.updateMatrix();
+    // result.updateMatrix();
     scene.add(result);
 }
 
@@ -259,7 +261,6 @@ function addFloor(floor: IHouseFloor) {
       }
   
       shapesGroup.rotation.y = floorSideGroup.rotation.y;
-      scene.add(shapesGroup);
   
       s++;
     });
@@ -267,25 +268,82 @@ function addFloor(floor: IHouseFloor) {
     return floorGroup;
 }
 
+function addFloor2(floor: IHouseFloor) {
+  // if (floor.floor === true) {
+  //   addRealFloor(floor);
+  // }
+  
+  const floorGroup = new OperationGroup();
+
+  const dummy = new Operation(new THREE.BoxGeometry(1, 1, 1));
+
+  let s = 0;
+  floor.sides.forEach((side) => {
+    const wallWidth = side.width || 0.01;
+  
+      const floorSideGroup = new OperationGroup();
+      floorSideGroup.position.x = side.start?.x;
+      floorSideGroup.position.z = side.start?.z;
+      floorSideGroup.position.y = side.start?.y;
+  
+      const shapesGroup = new THREE.Group();
+      shapesGroup.position.set(
+        floorSideGroup.position.x,
+        floorSideGroup.position.y,
+        floorSideGroup.position.z
+      );
+  
+      const wallGeo = new THREE.BoxGeometry(
+        wallWidth,
+        floor.height,
+        house.wallthickness
+      );
+      wallGeo.translate(wallWidth / 2, 0, -house.wallthickness / 2);
+      const wall = new Operation(wallGeo); //BoxBufferGeometry
+      wall.operation = ADDITION;
+      wall.receiveShadow = true;
+      wall.position.y = floor.height / 2;
+      wall.position.x = 0;
+      wall.position.z = 0;
+      // floorSideGroup.rotation.y = Math.PI / 2;
+      floorSideGroup.add(wall);
+
+  //   addFloorHoles(shapesGroup, floorSideGroup, side);
+    floorGroup.add(floorSideGroup);
+    //floorSideGroup.rotation.y = Math.PI / -2;
+
+    // Check if the side has an angle property and use it for rotation
+    if (typeof side.angle !== 'undefined') {
+      // Convert angle from degrees to radians and set rotation
+      debugger;
+      floorSideGroup.rotation.x = THREE.MathUtils.degToRad(side.angle);
+    } else {
+      // Existing logic to calculate rotation based on start and end points
+      if (s < floor.sides.length - 1) {
+        dummy.position.copy(side.end);
+        dummy.lookAt(side.start);
+        // floorSideGroup.rotation.x = THREE.MathUtils.degToRad(side.angle);
+        floorSideGroup.rotation.y = dummy.rotation.y + Math.PI / 2;
+      } else {
+        dummy.position.copy(side.start);
+        dummy.lookAt(side.end);
+        // floorSideGroup.rotation.x = THREE.MathUtils.degToRad(side.angle);
+        floorSideGroup.rotation.x = dummy.rotation.x - Math.PI / 2;
+      }
+    }
+
+    shapesGroup.rotation.z = floorSideGroup.rotation.z;
+
+    s++;
+  });
+
+  return floorGroup;
+}
+
 for (const floor of house.floors) {
     houseGroup.add(addFloor(floor));
 }
 
-// roof
-function addRoof(roof: IHouseRoof): THREE.Group {
-  const roofGroup = new THREE.Group();
-  if (roof.sides) {
-      for (const mesh of roof.sides) {
-          roofGroup.add(mesh);
-      }
-  }
-  return roofGroup;
-}
-
-if (house.roof && house.roof.sides) {
-  const roofGroup = addRoof(house.roof);
-  houseGroup.add(roofGroup);
-}
 
 
 
